@@ -59,23 +59,6 @@ def internet_search(
     
     return result
 
-
-# System prompt to steer the agent to be an expert researcher
-research_instructions = """You are an expert researcher. Conduct research efficiently and provide a concise, accurate answer.
-
-You have access to an internet search tool. Use it strategically:
-- Search once or twice maximum for the query
-- Use max_results=3 (default) for faster results
-- Provide a direct, well-structured answer based on the search results
-- Be concise but comprehensive
-"""
-
-# Configure DashScope DeepSeek model
-# Loads from .env file first, then falls back to os.environ
-# Available DeepSeek models on DashScope:
-# - "deepseek-v3" (chat model - recommended)
-# - "deepseek-r1" (reasoning model)
-# Add DASHSCOPE_API_KEY and optionally DASHSCOPE_MODEL to .env file
 deepseek_model = ChatTongyi(
     model=get_env("DASHSCOPE_MODEL", "deepseek-v3"),  # Default to deepseek-v3
     api_key=get_env("DASHSCOPE_API_KEY"),
@@ -85,6 +68,9 @@ deepseek_model = ChatTongyi(
 )
 
 checkpointer = MemorySaver()
+
+# Create store instance and keep reference for manual access
+store = InMemoryStore()
 
 def make_backend(runtime):
     return CompositeBackend(
@@ -96,19 +82,25 @@ def make_backend(runtime):
 
 # Create agent
 agent = create_deep_agent(
-    store=InMemoryStore(),  # Required for StoreBackend
+    store=store,  # Required for StoreBackend
     backend=make_backend,
     checkpointer=checkpointer,
     model=deepseek_model,
     tools=[internet_search],
-    system_prompt=research_instructions
+    system_prompt="""You have a file at /memories/instructions.txt with additional
+    instructions and preferences.
+
+    Read this file at the start of conversations to understand user preferences.
+
+    When users provide feedback like "please always do X" or "I prefer Y",
+    update /memories/instructions.txt using the edit_file tool."""
 )
 
 if __name__ == "__main__":
     # Thread 1: Write to long-term memory
     config1 = {"configurable": {"thread_id": str(uuid.uuid4())}}
 
-    result = agent.invoke({
+    agent.invoke({
         "messages": [{"role": "user", "content": "Save my preferences to /memories/preferences.txt"}]
     }, config=config1)
 
@@ -121,25 +113,15 @@ if __name__ == "__main__":
         print(result["messages"][-1].content)
         print("="*60)
     
-    print_agent_response(result)
-    # config2 = {"configurable": {"thread_id": str(uuid.uuid4())}}
-    # result2 = agent.invoke({
-    #     "messages": [{"role": "user", "content": "What are my preferences?"}]
-    # }, config=config2)
-
-    # print("\n" + "="*60)
-    # print("AGENT RESPONSE:")
-    # print("="*60)
-    # print(result2["messages"][-1].content)
-    # print("="*60)
-
     # Conversation 1: Learn about a project
-    agent.invoke({
+    result = agent.invoke({
         "messages": [{"role": "user", "content": "We're building a web app with React. Save project notes."}]
-    })
+    }, config=config1)
+    print_agent_response(result)
 
     # Conversation 2: Use that knowledge
     result = agent.invoke({
         "messages": [{"role": "user", "content": "What framework are we using?"}]
-    })
+    }, config=config1)
     print_agent_response(result)
+    
