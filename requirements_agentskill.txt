@@ -1,0 +1,9 @@
+# Dependencies for AgentSkill.py
+# LangChain dependencies
+langchain>=1.0.0
+langchain-core>=1.0.0
+
+# Optional: For different LLM providers (install as needed)
+# langchain-openai>=0.1.0  # For OpenAI models
+# langchain-anthropic>=0.1.0  # For Anthropic models
+# langchain-community>=0.0.20  # For community models (ChatTongyi, etc.)
