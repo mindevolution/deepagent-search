@@ -10,11 +10,11 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import AgentMiddleware
 
 # 自定义模块导入（可能是项目内部结构）
-from .core import SkillRegistry, SkillState, SkillMetadata
-from .core.state import SkillStateAccumulative, SkillStateFIFO
-from .middleware import SkillMiddleware
-from .config import SkillSystemConfig, load_config
-from .utils import setup_logger, generate_system_prompt
+from core import SkillRegistry, SkillState, SkillMetadata
+from core.state import SkillStateAccumulative, SkillStateFIFO
+from middleware import SkillMiddleware
+from config import SkillSystemConfig, load_config
+from utils import setup_logger, generate_system_prompt
 
 logger = logging.getLogger(__name__)
 
